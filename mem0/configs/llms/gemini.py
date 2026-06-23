@@ -27,6 +27,7 @@ class GeminiConfig(BaseLlmConfig):
         vertexai: Optional[bool] = None,
         project: Optional[str] = None,
         location: Optional[str] = None,
+        google_base_url: Optional[str] = None,
     ):
         """
         Initialize Gemini configuration.
@@ -44,6 +45,7 @@ class GeminiConfig(BaseLlmConfig):
             vertexai: Whether to use Vertex AI backend. If None, checks GOOGLE_GENAI_USE_VERTEXAI env var.
             project: GCP project ID for Vertex AI. If None, checks GOOGLE_CLOUD_PROJECT env var.
             location: GCP location for Vertex AI. If None, checks GOOGLE_CLOUD_LOCATION env var.
+            google_base_url: Custom base URL for API proxy/gateway. If None, checks GOOGLE_BASE_URL env var.
         """
         super().__init__(
             model=model,
@@ -62,3 +64,4 @@ class GeminiConfig(BaseLlmConfig):
         self.vertexai = vertexai
         self.project = project or os.getenv("GOOGLE_CLOUD_PROJECT")
         self.location = location or os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+        self.google_base_url = google_base_url or os.getenv("GOOGLE_BASE_URL")

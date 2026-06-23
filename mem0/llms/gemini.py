@@ -40,7 +40,14 @@ class GeminiLLM(LLMBase):
             self.client = genai.Client(vertexai=True, project=self.config.project, location=self.config.location)
         else:
             api_key = self.config.api_key or os.getenv("GOOGLE_API_KEY")
-            self.client = genai.Client(api_key=api_key)
+            base_url = getattr(self.config, "google_base_url", None) or os.getenv("GOOGLE_BASE_URL")
+            if base_url:
+                self.client = genai.Client(
+                    api_key=api_key,
+                    http_options=types.HttpOptions(base_url=base_url),
+                )
+            else:
+                self.client = genai.Client(api_key=api_key)
 
     def _parse_response(self, response, tools):
         """
