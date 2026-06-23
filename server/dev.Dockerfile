@@ -8,7 +8,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 # Copy requirements first for better caching
 COPY server/requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt && pip install google-genai>=1.0.0
 
 # Install mem0 in editable mode using Poetry
 WORKDIR /app/packages

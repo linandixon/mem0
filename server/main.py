@@ -113,8 +113,44 @@ POSTGRES_COLLECTION_NAME = os.environ.get("POSTGRES_COLLECTION_NAME", "memories"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 HISTORY_DB_PATH = os.environ.get("HISTORY_DB_PATH", "/app/history/history.db")
+DEFAULT_LLM_PROVIDER = os.environ.get("MEM0_DEFAULT_LLM_PROVIDER", "openai")
 DEFAULT_LLM_MODEL = os.environ.get("MEM0_DEFAULT_LLM_MODEL", "gpt-4.1-nano-2025-04-14")
+DEFAULT_EMBEDDER_PROVIDER = os.environ.get("MEM0_DEFAULT_EMBEDDER_PROVIDER", "openai")
 DEFAULT_EMBEDDER_MODEL = os.environ.get("MEM0_DEFAULT_EMBEDDER_MODEL", "text-embedding-3-small")
+DEFAULT_EMBEDDER_DIMS = os.environ.get("MEM0_DEFAULT_EMBEDDER_DIMS")
+
+
+def _build_provider_config(provider: str) -> dict:
+    """Build provider-specific config dict based on provider name."""
+    if provider == "gemini":
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        base_url = os.environ.get("GOOGLE_BASE_URL")
+        cfg = {"api_key": api_key}
+        if base_url:
+            cfg["google_base_url"] = base_url
+        return cfg
+    # Default: openai-compatible
+    cfg = {"api_key": OPENAI_API_KEY}
+    base_url = os.environ.get("OPENAI_BASE_URL")
+    if base_url:
+        cfg["openai_base_url"] = base_url
+    return cfg
+
+
+def _build_llm_config() -> dict:
+    cfg = _build_provider_config(DEFAULT_LLM_PROVIDER)
+    cfg["temperature"] = 0.2
+    cfg["model"] = DEFAULT_LLM_MODEL
+    return cfg
+
+
+def _build_embedder_config() -> dict:
+    cfg = _build_provider_config(DEFAULT_EMBEDDER_PROVIDER)
+    cfg["model"] = DEFAULT_EMBEDDER_MODEL
+    if DEFAULT_EMBEDDER_DIMS:
+        cfg["embedding_dims"] = int(DEFAULT_EMBEDDER_DIMS)
+    return cfg
+
 
 DEFAULT_CONFIG = {
     "version": "v1.1",
@@ -127,13 +163,14 @@ DEFAULT_CONFIG = {
             "user": POSTGRES_USER,
             "password": POSTGRES_PASSWORD,
             "collection_name": POSTGRES_COLLECTION_NAME,
+            **({"embedding_model_dims": int(DEFAULT_EMBEDDER_DIMS)} if DEFAULT_EMBEDDER_DIMS else {}),
         },
     },
     "llm": {
-        "provider": "openai",
-        "config": {"api_key": OPENAI_API_KEY, "temperature": 0.2, "model": DEFAULT_LLM_MODEL},
+        "provider": DEFAULT_LLM_PROVIDER,
+        "config": _build_llm_config(),
     },
-    "embedder": {"provider": "openai", "config": {"api_key": OPENAI_API_KEY, "model": DEFAULT_EMBEDDER_MODEL}},
+    "embedder": {"provider": DEFAULT_EMBEDDER_PROVIDER, "config": _build_embedder_config()},
     "history_db_path": HISTORY_DB_PATH,
 }
 
